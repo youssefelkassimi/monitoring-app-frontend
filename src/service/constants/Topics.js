@@ -1,0 +1,17 @@
+export const METRICS = "/topic/metrics";
+export const SYSTEM = "/topic/system";
+export const SERVICE = "/topic/service";
+export const USERS = "/topic/users";
+export const USERS_UPDATE = "/topic/user_update";
+export const USERS_STATUS_UPDATE = "/topic/user_status_update";
+export const ALERTS = "/topic/alerts";
+export const HEARTBEATS = "/topic/heartbeats";
+export const AGENTS = "/topic/agents";
+export const AGENTS_UPDATE = "/topic/agents_UPDATE";
+export const DISCOVERY = "/topic/discovery";
+export const INVENTORY = "/topic/inventory";
+export const LOGS = "/topic/logs";
+export const COMMANDS = "/topic/commands";
+export const COMMAND_RESULT = "/topic/command_result";
+export const ANOMALY = "/topic/anomaly";
+export const ADMIN = "/topic/admin";
