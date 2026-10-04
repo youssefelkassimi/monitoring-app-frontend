@@ -6,7 +6,6 @@ const TITLES = {
     '/agents': 'Agents',
     '/users': 'Users',
     '/alerts': 'Alerts',
-    '/triggers': 'Triggers',
 };
 
 /**

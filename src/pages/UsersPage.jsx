@@ -30,7 +30,9 @@ import {
     deleteUser,
     logoutUser,
 } from '../service/userService';
+import { getCurrentUser } from '../service/authService'
 import { ROLE_STYLES } from '../service/constants/user';
+import { USERS } from '../service/constants/Topics';
 import { topicSocketManager } from '../service/topicSocketManger';
 import UserFormModal from '../components/UserFormModal';
 import ConfirmDialog from '../components/Confirmdialog';
@@ -41,13 +43,11 @@ export default function UsersPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // filters
-    const [filter, setFilter] = useState('all'); // 'all' | 'online' | 'offline'
-    const [roleFilter, setRoleFilter] = useState(''); // '' | 'ADMIN' | 'AGENT' | 'USER'
+    const [filter, setFilter] = useState('all');
+    const [roleFilter, setRoleFilter] = useState('');
     const [search, setSearch] = useState('');
 
-    // modal state
-    const [editingUser, setEditingUser] = useState(null); // null = closed
+    const [editingUser, setEditingUser] = useState(null);
     const [deletingUser, setDeletingUser] = useState(null);
 
     // ---------- data loaders ----------
@@ -60,7 +60,9 @@ export default function UsersPage() {
             else if (filter === 'online') data = await getOnlineUsers();
             else if (filter === 'offline') data = await getOfflineUsers();
             else data = await getAllUsers();
-            setUsers(Array.isArray(data) ? data : []);
+            const currentUser = getCurrentUser();
+            let usersData = data.filter(u => u?.email !== currentUser?.username);
+            setUsers(usersData);
         } catch (e) {
             setError(e.message || 'Failed to load users');
         } finally {
@@ -73,7 +75,6 @@ export default function UsersPage() {
             const c = await getUserCounts();
             setCounts(c ?? { total: 0, online: 0, offline: 0 });
         } catch {
-            /* ignore */
         }
     }, []);
 
@@ -87,12 +88,15 @@ export default function UsersPage() {
 
     // ---------- WebSocket live sync ----------
     useEffect(() => {
-        const teardown = topicSocketManager.subscribe('/topic/users', {
+
+        const currentUser = getCurrentUser();
+        const teardown = topicSocketManager.subscribe(USERS, {
             message: (updatedUser) => {
                 if (!updatedUser?.id) return;
+                if (updatedUser?.email === currentUser?.username) return;
 
                 if (updatedUser.deleted) {
-                    setUsers((prev) => prev.filter((u) => u.id !== updatedUser.id));
+                    setUsers((prev) => prev.filter((u) => u.id === updatedUser.id));
                     loadCounts();
                     return;
                 }
@@ -409,7 +413,7 @@ function UserRow({ user, onEdit, onDelete, onToggleOnline, onLogout }) {
             {/* actions */}
             <td className="px-4 py-3">
                 <div className="flex items-center justify-end gap-1">
-                    {user.isOnline && (
+                    {(user.isOnline && user.role !== 'ADMIN') && (
                         <IconBtn
                             icon={LogOut}
                             label="Force logout"
@@ -417,8 +421,12 @@ function UserRow({ user, onEdit, onDelete, onToggleOnline, onLogout }) {
                             onClick={onLogout}
                         />
                     )}
-                    <IconBtn icon={Pencil} label="Edit" tone="blue" onClick={onEdit} />
-                    <IconBtn icon={Trash2} label="Delete" tone="red" onClick={onDelete} />
+                    {user.role !== 'ADMIN' && (
+                        <>
+                            <IconBtn icon={Pencil} label="Edit" tone="blue" onClick={onEdit} />
+                            <IconBtn icon={Trash2} label="Delete" tone="red" onClick={onDelete} />
+                        </>
+                    )}
                 </div>
             </td>
         </tr>

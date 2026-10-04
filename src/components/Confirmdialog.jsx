@@ -8,7 +8,7 @@ export default function ConfirmDialog({
     confirmLabel = 'Confirm',
     cancelLabel = 'Cancel',
     errorMessage = 'The action could not be completed. Try again.',
-    onClose,
+    onCancel,
     onConfirm,
 }) {
     const [busy, setBusy] = useState(false);
@@ -19,7 +19,7 @@ export default function ConfirmDialog({
         setError(null);
         try {
             await onConfirm();
-            onClose();
+            onCancel();
         } catch (err) {
             console.error(err);
             setError(err?.message || errorMessage);
@@ -28,7 +28,7 @@ export default function ConfirmDialog({
     };
 
     return (
-        <Modal title={title} onClose={onClose}>
+        <Modal title={title} onClose={onCancel}>
             <div className="flex gap-4 px-5 py-5">
                 <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded border border-red-900/60 bg-red-950/40 text-red-400">
                     <AlertTriangle size={18} />
@@ -42,7 +42,7 @@ export default function ConfirmDialog({
             <div className="flex justify-end gap-2 border-t border-slate-800 px-5 py-4">
                 <button
                     type="button"
-                    onClick={onClose}
+                    onClick={onCancel}
                     disabled={busy}
                     className="rounded px-3 py-2 text-sm text-slate-400 transition-colors hover:bg-slate-800 hover:text-slate-200 disabled:opacity-50"
                 >

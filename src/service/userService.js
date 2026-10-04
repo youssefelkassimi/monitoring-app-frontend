@@ -1,6 +1,6 @@
 import { authHeaders } from './authService';
-const BASE_URL = "http://localhost:8080/api/users";
 
+const BASE_URL = `${import.meta.env.VITE_BACKEND_API_BASE_URL}/api/users`;
 const jsonHeaders = {
     "Content-Type": "application/json",
 };

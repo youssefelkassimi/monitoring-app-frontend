@@ -1,11 +1,11 @@
 import { NavLink } from 'react-router-dom';
-import { Activity, BellRing, Bot, Users } from 'lucide-react';
+import { Activity, BellRing, Bot, Users, AlertOctagon } from 'lucide-react';
 
 export const NAV = [
     { to: '/agents', icon: Bot, label: 'Agents' },
     { to: '/users', icon: Users, label: 'Users' },
     { to: '/alerts', icon: BellRing, label: 'Alerts', badge: true },
-    { to: '/triggers', icon: Activity, label: 'Triggers' },
+    { to: '/anomalies', icon: AlertOctagon, label: 'Anomalies' },
 ];
 
 export default function NavItem({

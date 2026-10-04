@@ -1,14 +1,13 @@
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client/dist/sockjs";
-import {getToken } from './authService'
+import { getToken } from './authService';
 
 class TopicSocketManager {
     constructor() {
-        this.baseUrl = "http://localhost:8080/ws";
+        this.baseUrl = `${import.meta.env.VITE_BACKEND_API_BASE_URL}/ws`;
         this.client = null;
         this.connected = false;
         this.topics = new Map();
-        this.token = getToken();
     }
 
     configure({ baseUrl } = {}) {
@@ -45,58 +44,67 @@ class TopicSocketManager {
     }
 
     _connect() {
-    this.client = new Client({
-        webSocketFactory: () => new SockJS(this.baseUrl),
-        reconnectDelay: 3000,
+        const token = getToken();
+        if (!token) {
+            console.error("WebSocket connection aborted: No auth token found.");
+            return;
+        }
 
-        beforeConnect: () => {
-            const token = getToken();
-            if (!token) throw new Error("No token");
-            this.client.connectHeaders = { Authorization: `Bearer ${token}` };
-        },
+        console.log(token)
 
-        onConnect: () => {
-            this.connected = true;
-            this.topics.forEach((entry) => {
-                entry.stompSubscription = null;
-            });
-            // Re-subscribe every tracked topic
-            this.topics.forEach((_entry, topic) => this._subscribeTopic(topic));
-        },
+        this.client = new Client({
+            webSocketFactory: () => new SockJS(this.baseUrl),
+            reconnectDelay: 3000,
+            connectHeaders: {
+                Authorization: `Bearer ${token}`
+            },
 
-        onWebSocketClose: () => {
-            this.connected = false;
-            this.topics.forEach((entry) => {
-                entry.stompSubscription = null;
-            });
-            this._emitAll("close");
-        },
+            onConnect: () => {
+                this.connected = true;
+                // Re-subscribe to all tracked topics safely
+                this.topics.forEach((_entry, topic) => this._subscribeTopic(topic));
+            },
 
-        onStompError: (frame) => {
-            const msg = frame.headers["message"] || "";
-            const isAuth = /bearer token|user token|Missing user role|administrators/i.test(msg);
-            this.connected = false;
-            if (isAuth && this.client) {
-                this.client.deactivate();
-                this.client = null;
-            }
-            this._emitAll("error", frame);
-        },
-    });
+            onWebSocketClose: () => {
+                this.connected = false;
+                this.topics.forEach((entry) => {
+                    entry.stompSubscription = null;
+                });
+                this._emitAll("close");
+            },
 
-    this.client.activate();
-}
+            onStompError: (frame) => {
+                const msg = frame.headers["message"] || "";
+                const isAuthError = /administrators|unauthorized|forbidden|role/i.test(msg);
+
+                if (isAuthError) {
+                    console.error("Subscription blocked: You do not have permission for this topic.");
+                    this.topics.forEach((_entry, topic) => console.log(topic))
+                    this.client?.deactivate();
+                    this.client = null;
+                    this.connected = false;
+                    return;
+                }
+            },
+        });
+
+        this.client.activate();
+    }
 
     _subscribeTopic(topic) {
         const entry = this.topics.get(topic);
-        if (!this.client || !entry || entry.stompSubscription) return;
+        if (!this.client || !this.connected || !entry) return;
+
+        if (entry.stompSubscription) {
+            entry.stompSubscription.unsubscribe();
+            entry.stompSubscription = null;
+        }
 
         entry.stompSubscription = this.client.subscribe(topic, (message) => {
             let data = message.body;
             try {
                 data = JSON.parse(message.body);
             } catch {
-                // Keep non-JSON messages as raw strings.
             }
 
             this._emit(topic, "message", data);
@@ -114,8 +122,8 @@ class TopicSocketManager {
         entry.stompSubscription?.unsubscribe();
         this.topics.delete(topic);
 
-        if (this.topics.size === 0) {
-            this.client?.deactivate();
+        if (this.topics.size === 0 && this.client) {
+            this.client.deactivate();
             this.client = null;
             this.connected = false;
         }

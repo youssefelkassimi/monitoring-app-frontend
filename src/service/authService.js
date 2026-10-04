@@ -1,6 +1,6 @@
 const TOKEN_KEY = 'monitor.jwt';
 const USER_KEY = 'monitor.user';
-const BASE_URL = 'http://localhost:8080/api/auth';
+const BASE_URL = `${import.meta.env.VITE_BACKEND_API_BASE_URL}/api/auth`;
 
 const jsonHeaders = { 'Content-Type': 'application/json' };
 
@@ -81,13 +81,15 @@ export async function login(credentials) {
 }
 
 export async function logout() {
+    try {
+        await request(`${BASE_URL}/logout`, {
+            headers: { Authorization: `Bearer ${token}` },
+
+        });
+    } catch {
+    }
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
-    try {
-        await request(`${BASE_URL}/logout`, { method: 'POST' });
-    } catch {
-        /* ignore network errors — local state is already cleared */
-    }
 }
 
 export function authHeaders(headers = {}) {

@@ -21,7 +21,7 @@ import {
     SEVERITY_ORDER,
 } from '../service/constants/alert';
 
-export default function AlertsPage() {
+export default function AlertsPage({ agentId }) {
     const {
         alerts,
         page,
@@ -32,7 +32,7 @@ export default function AlertsPage() {
         newIds,
         goToPage,
         reload,
-    } = useAlerts({ pageSize: 50 });
+    } = useAlerts({ pageSize: 50 }, agentId);
 
     // ---------- filters ----------
     const [search, setSearch] = useState('');

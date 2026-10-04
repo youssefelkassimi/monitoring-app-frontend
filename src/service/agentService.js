@@ -1,6 +1,6 @@
 import { authHeaders } from './authService';
 
-const BASE_URL = "http://localhost:8080/api/agents";
+const BASE_URL = `${import.meta.env.VITE_BACKEND_API_BASE_URL}/api/agents`;
 
 const jsonHeaders = {
     "Content-Type": "application/json",
@@ -43,6 +43,13 @@ export const getData = async (id, endpoint, pageable) => request(buildUrl(`/${id
 export const getLastData = async (id, endpoint) => request(buildUrl(`/${id}/${endpoint}/latest`))
 export const getAlertsPage = async (pageable) => request(buildUrl(`/alerts`, pageable))
 
+export const getAgentAlertsPage = async (agentId, pageable) => request(buildUrl(`/${agentId}/alerts`, pageable))
+
+export const getAnomliesPage = async (pageable, status = '') => request(buildUrl(`/anomlies`, { pageable: pageable, status: status }))
+
+export const getAgentAnomaliesPage = async (agentId, pageable) => request(buildUrl(`/${agentId}/anomlies`, pageable))
+
+
 export const executeCommand = async (id, command) => request(buildUrl(`/${id}/commands`), {
     method: "POST",
     headers: authHeaders(jsonHeaders),
@@ -51,17 +58,16 @@ export const executeCommand = async (id, command) => request(buildUrl(`/${id}/co
 export const getAgentCommands = async (agentId, pageable = {}) => request(buildUrl(`/${agentId}/commands`, pageable));
 
 export const provisionAgent = async (payload) =>
-    request("http://localhost:8080/api", {
+    request(`${import.meta.env.VITE_BACKEND_API_BASE_URL}/api`, {
         method: "POST",
         headers: authHeaders(jsonHeaders),
         body: JSON.stringify(payload),
     });
 
 export const renameAgent = async (id, label) =>
-    request(buildUrl(`/${id}`), {
+    request(buildUrl(`/${id}/${label}`), {
         method: "PATCH",
         headers: authHeaders(jsonHeaders),
-        body: JSON.stringify({ label }),
     });
 
 export const revokeAgent = async (id) =>
@@ -75,22 +81,6 @@ export const deleteAgent = async (id) =>
         method: "DELETE",
         headers: jsonHeaders,
     });
-// let chec = await getLastData("8c99af2a-219e-469d-866c-76d681556935", "service")
-// let che = JSON.parse(chec);
-// console.log(che)
 
-// await revokeAgent("8c99af2a-219e-469d-866c-76d681556935")
-
-// let alerts = await getAlertsPage();
-// console.log(alerts)
-// const agentId = '9d51ee29-e506-45c2-bc8e-95d41906f8e9'
-// const command = {
-//     command: 'ls',
-//     userId: "a1b2c3d4-1111-4aaa-8bbb-000000000001",
-//     args: [],//JSON.stringify(args),
-//     timeout: 5,
-// }
-// const created = await executeCommand(agentId, command);
-// console.log(created)
 
 

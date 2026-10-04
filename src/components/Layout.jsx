@@ -36,7 +36,7 @@ export default function Layout() {
             <Sidebar unreadAlerts={unreadAlerts} />
 
             <MobileTopBar
-                onOpenDrawer={() => setDrawerOpen(true)}
+                onMenuClick={() => setDrawerOpen(true)}
                 unreadAlerts={unreadAlerts}
             />
 

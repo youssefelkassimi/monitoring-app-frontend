@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { getAlertsPage } from '../service/agentService';
+import { getAlertsPage, getAgentAlertsPage } from '../service/agentService';
 import { topicSocketManager } from '../service/topicSocketManger';
+import { ALERTS } from '../service/constants/Topics'
 
 const MAX_BUFFERED = 500;
 
-export function useAlerts({ pageSize = 50 } = {}) {
+export function useAlerts({ pageSize = 50 } = {}, agentId = '') {
     const [alerts, setAlerts] = useState([]);
     const [page, setPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
@@ -19,11 +20,16 @@ export function useAlerts({ pageSize = 50 } = {}) {
             setLoading(true);
             setError(null);
             try {
-                const res = await getAlertsPage({
+                const res = agentId ? await getAgentAlertsPage(agentId, {
                     page: pageNumber,
                     size: pageSize,
                     sort: 'timestamp,desc',
-                });
+                }) : await getAlertsPage({
+                    page: pageNumber,
+                    size: pageSize,
+                    sort: 'timestamp,desc',
+                })
+
                 const content = res?.content ?? [];
                 setAlerts(content);
                 setPage(res?.number ?? pageNumber);
@@ -45,7 +51,8 @@ export function useAlerts({ pageSize = 50 } = {}) {
 
     // Live WebSocket stream
     useEffect(() => {
-        const teardown = topicSocketManager.subscribe('/topic/alerts', {
+        let topic = agentId ? `${ALERTS}/${agentId}` : ALERTS
+        const teardown = topicSocketManager.subscribe(topic, {
             message: (incoming) => {
                 if (!incoming?.id) return;
                 // de-dupe

@@ -17,6 +17,7 @@ import {
     Wifi,
     WifiOff,
     ShieldAlert,
+    RotateCcw, // Added for unrevoke icon
 } from 'lucide-react';
 import {
     getAllAgents,
@@ -46,7 +47,7 @@ export default function AgentsPage() {
     // modal state
     const [provisionOpen, setProvisionOpen] = useState(false);
     const [renamingAgent, setRenamingAgent] = useState(null);
-    const [revokingAgent, setRevokingAgent] = useState(null);
+    const [revokingAgent, setRevokingAgent] = useState(null); // Used for both revoke & unrevoke confirmation or direct action
     const [deletingAgent, setDeletingAgent] = useState(null);
 
     // ---------- load ----------
@@ -66,6 +67,7 @@ export default function AgentsPage() {
     useEffect(() => {
         loadAgents();
     }, [loadAgents]);
+
     useEffect(() => {
         const teardown = topicSocketManager.subscribe('/topic/agents', {
             message: (updated) => {
@@ -129,11 +131,15 @@ export default function AgentsPage() {
         setRenamingAgent(null);
     };
 
-    const handleRevoked = async (agentId) => {
-        await revokeAgent(agentId);
+    const handleToggleRevoke = async (agent) => {
+        const isCurrentlyRevoked = agent.provisioningStatus === 'REVOKED';
+        const newStatus = isCurrentlyRevoked ? 'ACTIVE' : 'REVOKED';
+
+        await revokeAgent(agent.agentId);
+
         setAgents((prev) =>
             prev.map((a) =>
-                a.agentId === agentId ? { ...a, provisioningStatus: 'REVOKED' } : a
+                a.agentId === agent.agentId ? { ...a, provisioningStatus: newStatus } : a
             )
         );
         setRevokingAgent(null);
@@ -141,7 +147,6 @@ export default function AgentsPage() {
 
     const handleDeleted = async (agentId) => {
         await deleteAgent(agentId);
-        setAgents((prev) => prev.filter((a) => a.agentId !== agentId));
         setDeletingAgent(null);
     };
 
@@ -242,7 +247,7 @@ export default function AgentsPage() {
                             agent={agent}
                             onOpen={() => navigate(`/agents/${agent.agentId}`)}
                             onRename={isAdmin ? () => setRenamingAgent(agent) : undefined}
-                            onRevoke={isAdmin ? () => setRevokingAgent(agent) : undefined}
+                            onRevokeToggle={isAdmin ? () => setRevokingAgent(agent) : undefined}
                             onDelete={isAdmin ? () => setDeletingAgent(agent) : undefined}
                         />
                     ))}
@@ -267,12 +272,16 @@ export default function AgentsPage() {
 
             {revokingAgent && (
                 <ConfirmDialog
-                    title="Revoke agent?"
-                    message={`This will revoke the token for ${revokingAgent.label || revokingAgent.agentId}. The agent will no longer be able to send telemetry.`}
-                    confirmLabel="Revoke"
-                    tone="warning"
+                    title={revokingAgent.provisioningStatus === 'REVOKED' ? "Unrevoke agent?" : "Revoke agent?"}
+                    message={
+                        revokingAgent.provisioningStatus === 'REVOKED'
+                            ? `This will restore token access for ${revokingAgent.label || revokingAgent.agentId}.`
+                            : `This will revoke the token for ${revokingAgent.label || revokingAgent.agentId}. The agent will no longer be able to send telemetry.`
+                    }
+                    confirmLabel={revokingAgent.provisioningStatus === 'REVOKED' ? "Unrevoke" : "Revoke"}
+                    tone={revokingAgent.provisioningStatus === 'REVOKED' ? "blue" : "warning"}
                     onCancel={() => setRevokingAgent(null)}
-                    onConfirm={() => handleRevoked(revokingAgent.agentId)}
+                    onConfirm={() => handleToggleRevoke(revokingAgent)}
                 />
             )}
 
@@ -291,8 +300,7 @@ export default function AgentsPage() {
 }
 
 /* ---------- card ---------- */
-function AgentCard({ agent, onOpen, onRename, onRevoke, onDelete }) {
-    const statusMeta = STATUS_STYLES[agent.status] ?? STATUS_STYLES.OFFLINE;
+function AgentCard({ agent, onOpen, onRename, onRevokeToggle, onDelete }) {
     const provMeta =
         PROVISIONING_STYLES[agent.provisioningStatus] ?? PROVISIONING_STYLES.PENDING;
 
@@ -378,21 +386,29 @@ function AgentCard({ agent, onOpen, onRename, onRevoke, onDelete }) {
                         icon={Pencil}
                         label="Rename"
                         tone="blue"
-                        onClick={onRename}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onRename();
+                        }}
                         disabled={isRevoked}
                     />
                     <IconBtn
-                        icon={Ban}
-                        label="Revoke"
-                        tone="amber"
-                        onClick={onRevoke}
-                        disabled={isRevoked}
+                        icon={isRevoked ? RotateCcw : Ban}
+                        label={isRevoked ? "Unrevoke" : "Revoke"}
+                        tone={isRevoked ? "blue" : "amber"}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onRevokeToggle();
+                        }}
                     />
                     <IconBtn
                         icon={Trash2}
                         label="Delete"
                         tone="red"
-                        onClick={onDelete}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onDelete();
+                        }}
                     />
                 </div>
             </div>

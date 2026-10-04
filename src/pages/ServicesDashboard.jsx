@@ -23,6 +23,13 @@ export default function ServicesDashboard({
     discovery,
     logs = [],
 }) {
+
+    console.log(dns);
+    console.log(http);
+    console.log(icmp);
+    console.log(discovery);
+    console.log(logs);
+
     const summary = React.useMemo(() => {
         const monitored = services?.monitored_services ?? [];
         const servicesDown = monitored.filter(

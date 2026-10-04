@@ -10,9 +10,9 @@ import AppServicePage from './pages/AppServicePage';
 import AgentAlertsPage from './pages/AgentAlertsPage';
 import UsersPage from './pages/UsersPage';
 import AlertsPage from './pages/AlertsPage';
-import TriggersPage from './pages/TriggersPage';
 import NotFoundPage from './pages/NotFoundPage';
 import ServicesPlayground from './pages/ServicesPlayground';
+import AnomaliesPage from './pages/AnomalyPage';
 
 const IS_DEV = import.meta.env?.DEV === true;
 
@@ -31,7 +31,7 @@ export default function AppRouter() {
                     <Route path="/agents/:agentId/services" element={<AppServicePage />} />
                     <Route path="/agents/:agentId/alerts" element={<AgentAlertsPage />} />
                     <Route path="/alerts" element={<AlertsPage />} />
-                    <Route path="/triggers" element={<TriggersPage />} />
+                    <Route path="/anomalies" element={<AnomaliesPage />} />
                     {IS_DEV && (
                         <Route path="/playground/services" element={<ServicesPlayground />} />
                     )}
