@@ -43,7 +43,6 @@ export function useAgentServices(agentId) {
             const next = { ...prev, lastUpdated: new Date() };
             switch (topic) {
                 case 'services':
-                    console.log(data.services)
                     next.services = data.services;
                     break;
                 case 'metrics':
