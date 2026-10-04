@@ -50,7 +50,6 @@ class TopicSocketManager {
             return;
         }
 
-        console.log(token)
 
         this.client = new Client({
             webSocketFactory: () => new SockJS(this.baseUrl),
@@ -79,7 +78,6 @@ class TopicSocketManager {
 
                 if (isAuthError) {
                     console.error("Subscription blocked: You do not have permission for this topic.");
-                    this.topics.forEach((_entry, topic) => console.log(topic))
                     this.client?.deactivate();
                     this.client = null;
                     this.connected = false;
