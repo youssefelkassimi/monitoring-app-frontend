@@ -95,7 +95,7 @@ export default function UsersPage() {
                 if (!updatedUser?.id) return;
                 if (updatedUser?.email === currentUser?.username) return;
 
-                 if (updatedUser?.fullName === "deleted") {
+                 if (updatedUser?.fullName !=== "deleted") {
                     setUsers((prev) => prev.filter((u) => u.id === updatedUser.id));
                     loadCounts();
                     return;
