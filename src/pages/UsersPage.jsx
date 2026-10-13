@@ -95,11 +95,12 @@ export default function UsersPage() {
                 if (!updatedUser?.id) return;
                 if (updatedUser?.email === currentUser?.username) return;
 
-                if (updatedUser.deleted) {
+                 if (updatedUser?.fullName === "deleted") {
                     setUsers((prev) => prev.filter((u) => u.id === updatedUser.id));
                     loadCounts();
                     return;
                 }
+
 
                 setUsers((prev) => {
                     const exists = prev.some((u) => u.id === updatedUser.id);
