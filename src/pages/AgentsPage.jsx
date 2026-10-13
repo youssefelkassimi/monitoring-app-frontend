@@ -71,6 +71,7 @@ export default function AgentsPage() {
     useEffect(() => {
         const teardown = topicSocketManager.subscribe('/topic/agents', {
             message: (updated) => {
+                console.log(updated);
                 if (!updated?.agentId) return;
 
                 if (updated.deleted) {
